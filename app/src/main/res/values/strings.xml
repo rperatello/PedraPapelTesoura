@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PedraPapelTesoura</string>
+    <string name="txtOpponentLabel">Quantidade de Oponentes: </string>
+    <string name="opponent1Txt">Você</string>
+    <string name="opponent2Txt">Oponente 1</string>
+    <string name="opponent3Txt">Oponente 2</string>
+    <string name="btSectionTxt">Escolha sua jogada</string>
+    <string name="win">Você venceu!</string>
+    <string name="lost">Você perdeu!</string>
+    <string name="toTie">Vocês empataram!</string>
+    <string name="op2Win">Oponente 2 venceu</string>
+    <string name="op1Win">Oponente 1 ganhou !</string>
+</resources>
