@@ -1,11 +1,27 @@
 package br.edu.ifsp.scl.sdm.pedrapapeltesoura;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import br.edu.ifsp.scl.sdm.pedrapapeltesoura.databinding.ActivityMainBinding;
@@ -13,10 +29,25 @@ import br.edu.ifsp.scl.sdm.pedrapapeltesoura.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ActivityMainBinding activityMainBinding;
+    private ActivityResultLauncher<Intent> settingsActivityResultLauncher;
 
-    private Integer numberOfOpponents;
+
+    public static final String EXTRA_CONFIGURACOES = "EXTRA_SETTINGS";
+    public static final String IS_TWO_PLAYERS = "IS_TWO_PLAYERS";
+    public static final String NUMBER_OF_ROUNDS = "NUMBER_OF_ROUNDS";
+
+
+    private Integer p1 = 0;
+    private Integer p2 = 0;
+    private Integer p3 = 0;
+    private Integer roundsFinished = 0;
     private Integer choiceOp1;
     private Integer[] hands = {R.mipmap.pedra, R.mipmap.papel, R.mipmap.tesoura};
+    private Boolean endGame = false;
+
+
+    private GameSettings gameSettings = new GameSettings(true, 1);
+    private GameSettings gameSettingsBackup = new GameSettings(true, 1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,21 +56,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
 
+        activityMainBinding.btStart.setOnClickListener(this);
         activityMainBinding.btStone.setOnClickListener(this);
         activityMainBinding.btPaper.setOnClickListener(this);
         activityMainBinding.btScissor.setOnClickListener(this);
 
-        numberOfOpponents = activityMainBinding.opponentRGroup.getCheckedRadioButtonId() == R.id.radio1Rb ? 1 : 2;
+        Log.v(getString(R.string.app_name), "onCreate: Iniciando ciclo de vida completo");
+
+        settingsActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == RESULT_OK && result != null) {
+                            Intent intent = result.getData();
+                            gameSettings = (GameSettings) intent.getSerializableExtra(EXTRA_CONFIGURACOES);
+                            if (gameSettings != null) {
+                                Toast.makeText(MainActivity.this, gameSettings.toString(), Toast.LENGTH_LONG).show();
+                                boolean isSameConfig = gameSettingsBackup.equals(gameSettings);
+                                if(!isSameConfig)
+                                    resetGame();
+                            }
+                            if (gameSettings != null && gameSettings.getIsTwoPlayers()) {
+                                findViewById(R.id.imagesSection2).setVisibility(View.GONE);
+                            }
+                            else {
+                                findViewById(R.id.imagesSection2).setVisibility(View.VISIBLE);
+                            }
+                        }
+                    }
+                }
+        );
+
         cleanAll();
 
     }
 
     @Override
     public void onClick(View view) {
-        numberOfOpponents = activityMainBinding.opponentRGroup.getCheckedRadioButtonId() == R.id.radio1Rb ? 1 : 2;
-        cleanAll();
 
         switch (view.getId()) {
+            case R.id.btStart:
+                startGame();
+                Log.v(getString(R.string.app_name), "onClick - passou startGame");
+                return;
             case R.id.btStone:
                 choiceOp1 = 0;
                 activityMainBinding.btStone.setBackgroundColor(Color.GRAY);
@@ -56,30 +116,88 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         activityMainBinding.opponent1.setImageResource(hands[choiceOp1]);
 
-        if (numberOfOpponents == 1) {
+        if (gameSettings.getIsTwoPlayers()) {
             twoPlayers();
         } else {
             threePlayers();
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.v(getString(R.string.app_name), "onSaveInstanceState executado - salvando dados de instância");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.v(getString(R.string.app_name), "onRestoreInstanceState executado - restaurando dados de instância");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.settingMi:
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                settingsIntent.putExtra(EXTRA_CONFIGURACOES, gameSettings);
+                settingsActivityResultLauncher.launch(settingsIntent);
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public void twoPlayers() {
         Random random = new Random(System.currentTimeMillis());
         int choiceOp2 = random.nextInt(3);
 
         activityMainBinding.opponent2.setImageResource(hands[choiceOp2]);
-        activityMainBinding.resultSection.setVisibility(View.VISIBLE);
-        activityMainBinding.imagesSection2.setVisibility(View.GONE);
-        activityMainBinding.resultSection.setText(resultFor2(choiceOp1, choiceOp2));
-        activityMainBinding.resultSection.setVisibility(View.VISIBLE);
+        resultFor2(choiceOp1, choiceOp2);
+        return;
     }
 
 
     public void threePlayers() {
         Random random = new Random(System.currentTimeMillis());
         int choiceOp2 = random.nextInt(3);
-        int choiceOp3 = numberOfOpponents == 2? random.nextInt(3) : null;
+        int choiceOp3 = !gameSettings.getIsTwoPlayers() ? random.nextInt(3) : null;
 
         activityMainBinding.opponent2.setImageResource(hands[choiceOp2]);
         activityMainBinding.opponent3.setImageResource(hands[choiceOp3]);
@@ -88,18 +206,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         activityMainBinding.resultSection.setVisibility(View.VISIBLE);
     }
 
+    private void checkGame(){
+//        Log.v(getString(R.string.app_name), "Entrou checkGame: " + gameSettings.toString() + " roundsFinished: " + roundsFinished.toString());
+        if(roundsFinished >= gameSettings.getRound()){
+            endGame = true;
+        }
+        return;
+    };
 
-
-    private String resultFor2(Integer i1, Integer i2) {
+    private void resultFor2(Integer op1, Integer op2) {
         Integer res;
-        res = compareResult(i1, i2);
+        res = compareResult(op1, op2);
         switch (res) {
-            case 1: return getString(R.string.win);
-            case -1: return getString(R.string.lost);
-            default: return getString(R.string.toTie);
+            case 1:
+                p1 += 1;
+                roundsFinished += 1;
+                checkGame();
+                if(endGame)
+                    SendResult();
+                else{
+                    Toast.makeText(MainActivity.this, getString(R.string.win),Toast.LENGTH_SHORT).show();
+                    cleanAll();
+                }
+                break;
+            case -1:
+                p2 += 1;
+                roundsFinished += 1;
+                checkGame();
+                if(endGame)
+                    SendResult();
+                else{
+                    Toast.makeText(MainActivity.this, getString(R.string.lost),Toast.LENGTH_SHORT).show();
+                    cleanAll();
+                }
+                break;
+            default:
+                roundsFinished += 1;
+                checkGame();
+                if(endGame)
+                    SendResult();
+                else{
+                    Toast.makeText(MainActivity.this, getString(R.string.toTie),Toast.LENGTH_SHORT).show();
+                    cleanAll();
+                }
+                break;
         }
     }
-
 
     private String resultFor3(Integer v1, Integer v2, Integer v3) {
         Integer res1;
@@ -110,9 +262,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         soma = res1 + res2;
 
         switch (soma) {
-            case 0: return getString(R.string.toTie);
-            case 2: return getString(R.string.win);
-            default: return getString(R.string.lost);
+            case 0:
+                return getString(R.string.toTie);
+            case 2:
+                return getString(R.string.win);
+            default:
+                return getString(R.string.lost);
         }
     }
 
@@ -126,11 +281,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private String ckWinner(){
+//        Log.v(getString(R.string.app_name), "Entrou ckWinner");
+        if(p1 == p2 && p1 == p3){ return "Os jogadores empataram!"; }
+        else if(p1 > p2 && p1 > p3){ return "Você venceu o jogo!"; }
+        else if(p1 > p2 && p1 == p3){ return "Oponente 2 e Você empataram!"; }
+        else if(p1 > p2 && p1 < p3){ return "Oponente 2 venceu o jogo!"; }
+        else if(p1 == p2 && p1 > p3){ return "Oponente 1 e Você empataram!"; }
+        else if(p1 < p2 && p2 > p3){ return "Oponente 1 venceu o jogo!"; }
+        else if(p1 < p2 && p2 == p3){ return "Oponente 1 e Oponente 2 empataram!"; }
+        else if(p1 < p2 && p2 < p3){ return "Oponente 2 venceu o jogo!"; }
+        return "Você perdeu!";
+    }
+
+    private void SendResult(){
+        Log.v(getString(R.string.app_name), "Entrou SendResult");
+        resetGame();
+        activityMainBinding.resultSection.setText(ckWinner());
+        activityMainBinding.resultSection.setVisibility(View.VISIBLE);
+    }
 
     public void cleanAll() {
+        Log.v(getString(R.string.app_name), "Entrou cleanAll");
         activityMainBinding.btStone.setBackgroundColor(Color.WHITE);
         activityMainBinding.btPaper.setBackgroundColor(Color.WHITE);
         activityMainBinding.btScissor.setBackgroundColor(Color.WHITE);
+        return;
+    }
+
+    private void startGame() {
+        Log.v(getString(R.string.app_name), "Entrou startGame");
+        activityMainBinding.resultSection.setVisibility(View.GONE);
+        activityMainBinding.btStart.setVisibility(View.GONE);
+        activityMainBinding.lbBtSection.setVisibility(View.VISIBLE);
+        activityMainBinding.btSection.setVisibility(View.VISIBLE);
+        p1 = 0;
+        p2 = 0;
+        p3 = 0;
+        setNewMatch();
+        return;
+    }
+
+    private void setNewMatch() {
+        Log.v(getString(R.string.app_name), "Entrou setNewMatch");
+        activityMainBinding.opponent1.setImageResource(hands[0]);
+        activityMainBinding.opponent2.setImageResource(hands[0]);
+        activityMainBinding.opponent3.setImageResource(hands[0]);
+        cleanAll();
+        return;
+    }
+
+    private void resetGame(){
+        activityMainBinding.imagesSection2.setVisibility(View.GONE);
+        activityMainBinding.resultSection.setVisibility(View.GONE);
+        activityMainBinding.lbBtSection.setVisibility(View.GONE);
+        activityMainBinding.btSection.setVisibility(View.GONE);
+        activityMainBinding.btStart.setVisibility(View.VISIBLE);
+        roundsFinished = 0;
+        endGame = false;
+        return;
     }
 
 }

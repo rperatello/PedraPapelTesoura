@@ -21,70 +21,7 @@
         app:layout_constraintGuide_end="15dp" />
 
 
-    <LinearLayout
-        android:id="@+id/opponentConfig"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintStart_toStartOf="@id/leftGuide"
-        app:layout_constraintEnd_toEndOf="@id/rightGuide"
-        app:layout_constraintTop_toTopOf="parent"
-        >
 
-        <TextView
-            android:id="@+id/lbOpponent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:layout_marginLeft="15dp"
-            android:text="@string/txtOpponentLabel"
-            android:textAllCaps="true"
-            android:textColor="@color/black" />
-
-        <RadioGroup
-            android:id="@+id/opponentRGroup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="15dp"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/radio1Rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:checked="true"
-                android:textColor="@color/black"
-                android:text="1" />
-
-            <RadioButton
-                android:id="@+id/radio2Rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:layout_marginLeft="5dp"
-                android:textColor="@color/black"
-                android:text="2" />
-
-        </RadioGroup>
-
-    </LinearLayout>
-
-    <ImageView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/configDivider"
-        android:src="@android:drawable/divider_horizontal_dark"
-        android:layout_width="fill_parent"
-        android:layout_height="1dp"
-        android:scaleType="fitXY"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:paddingBottom="2dp"
-        android:paddingTop="1dp"
-        android:background="#000"
-        app:layout_constraintBottom_toBottomOf="@id/opponentConfig"
-        app:layout_constraintStart_toStartOf="@id/leftGuide"
-        app:layout_constraintEnd_toEndOf="@id/rightGuide" />
 
     <LinearLayout
         android:id="@+id/imagesSection1"
@@ -93,7 +30,7 @@
         android:layout_marginTop="10dp"
         app:layout_constraintEnd_toEndOf="@id/rightGuide"
         app:layout_constraintStart_toStartOf="@id/leftGuide"
-        app:layout_constraintTop_toBottomOf="@id/configDivider">
+        app:layout_constraintTop_toTopOf="@id/rightGuide" >
 
         <LinearLayout
             android:id="@+id/Section1"
@@ -215,6 +152,7 @@
 
     <TextView
         android:id="@+id/lbBtSection"
+        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -229,6 +167,7 @@
 
     <LinearLayout
         android:id="@+id/btSection"
+        android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="80dp"
         android:orientation="horizontal"
@@ -267,5 +206,17 @@
                 app:tint="@color/design_default_color_on_secondary" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/rightGuide"
+        app:layout_constraintStart_toStartOf="@id/leftGuide"
+        android:layout_marginBottom="35dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:text="@string/btStart" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
