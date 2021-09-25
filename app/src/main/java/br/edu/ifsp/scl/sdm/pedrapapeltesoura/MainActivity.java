@@ -33,8 +33,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public static final String EXTRA_CONFIGURACOES = "EXTRA_SETTINGS";
-    public static final String IS_TWO_PLAYERS = "IS_TWO_PLAYERS";
-    public static final String NUMBER_OF_ROUNDS = "NUMBER_OF_ROUNDS";
+
+    public final String IS_TWO_PLAYERS = "IS_TWO_PLAYERS";
+    public final String NUMBER_OF_ROUNDS = "NUMBER_OF_ROUNDS";
+    public final String POINTS_OPPONENT_1 = "POINTS_OPPONENT_1";
+    public final String POINTS_OPPONENT_2 = "POINTS_OPPONENT_2";
+    public final String POINTS_OPPONENT_3 = "POINTS_OPPONENT_3";
+    public final String ROUNDS_FINISHED = "ROUNDS_FINISHED";
 
 
     private Integer p1 = 0;
@@ -72,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Intent intent = result.getData();
                             gameSettings = (GameSettings) intent.getSerializableExtra(EXTRA_CONFIGURACOES);
                             if (gameSettings != null) {
-                                Toast.makeText(MainActivity.this, gameSettings.toString(), Toast.LENGTH_LONG).show();
+                                //Toast.makeText(MainActivity.this, gameSettings.toString(), Toast.LENGTH_LONG).show();
                                 boolean isSameConfig = gameSettingsBackup.equals(gameSettings);
                                 if(!isSameConfig)
                                     resetGame();
@@ -127,12 +132,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         Log.v(getString(R.string.app_name), "onSaveInstanceState executado - salvando dados de instância");
+        outState.putBoolean(IS_TWO_PLAYERS, gameSettings.getIsTwoPlayers());
+        outState.putInt(NUMBER_OF_ROUNDS, gameSettings.getRound());
+        outState.putInt(POINTS_OPPONENT_1, p1);
+        outState.putInt(POINTS_OPPONENT_2, p2);
+        outState.putInt(POINTS_OPPONENT_3, p3);
+        outState.putInt(ROUNDS_FINISHED, roundsFinished);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         Log.v(getString(R.string.app_name), "onRestoreInstanceState executado - restaurando dados de instância");
+        if(savedInstanceState.getBoolean(IS_TWO_PLAYERS) && gameSettings != null){
+            gameSettings.setIsTwoPlayers(true);
+            findViewById(R.id.imagesSection2).setVisibility(View.GONE);
+        };
+
+        if(!savedInstanceState.getBoolean(IS_TWO_PLAYERS) && gameSettings != null){
+            gameSettings.setIsTwoPlayers(false);
+            findViewById(R.id.imagesSection2).setVisibility(View.VISIBLE);
+        };
+
+        if(gameSettings != null){
+            gameSettings.setRound(savedInstanceState.getInt(NUMBER_OF_ROUNDS, 0));
+        };
+
+        p1 = savedInstanceState.getInt(POINTS_OPPONENT_1, 0);
+        p2 = savedInstanceState.getInt(POINTS_OPPONENT_2, 0);
+        p3 = savedInstanceState.getInt(POINTS_OPPONENT_3, 0);
+        roundsFinished = savedInstanceState.getInt(ROUNDS_FINISHED, 0);
     }
 
     @Override
@@ -202,8 +231,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         activityMainBinding.opponent2.setImageResource(hands[choiceOp2]);
         activityMainBinding.opponent3.setImageResource(hands[choiceOp3]);
         activityMainBinding.imagesSection2.setVisibility(View.VISIBLE);
-        activityMainBinding.resultSection.setText(resultFor3(choiceOp1, choiceOp2, choiceOp3));
-        activityMainBinding.resultSection.setVisibility(View.VISIBLE);
+        resultFor3(choiceOp1, choiceOp2, choiceOp3);
     }
 
     private void checkGame(){
@@ -253,21 +281,119 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private String resultFor3(Integer v1, Integer v2, Integer v3) {
-        Integer res1;
-        Integer res2;
-        Integer soma;
-        res1 = compareResult(v1, v2);
-        res2 = compareResult(v1, v3);
-        soma = res1 + res2;
+    private void resultFor3(Integer op1, Integer op2, Integer op3) {
+        Integer res1 = compareResult(op1, op2);
+        Integer res2 = compareResult(op1, op3);
+        Integer res3 = compareResult(op2, op3);
 
-        switch (soma) {
-            case 0:
-                return getString(R.string.toTie);
-            case 2:
-                return getString(R.string.win);
-            default:
-                return getString(R.string.lost);
+        if(op1 != op2 && op1 != op3 && op2 != op2) {
+            roundsFinished += 1;
+            checkGame();
+            if (endGame)
+                SendResult();
+            else {
+                Toast.makeText(MainActivity.this, "Vocês empataram!", Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 0 && res3 == 0){
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Vocês empataram!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 1 && res3 == 0){
+            p1 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Você ganhou!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 0 && res3 == -1){
+            p3 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Oponente 2 ganhou!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 1 && res2 == 1){
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Vocês empataram!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 0 && res2 == 1){
+            p1 += 1;
+            p2 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Você e o Oponente 1 ganharam a jogada!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == -1 && res3 == 1){
+            p2 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Oponente 1 ganhou a jogada!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == -1 && res3 == 0){
+            p2 += 1;
+            p3 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Oponente 1 e Oponente 2 ganharam a jogada!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else if(res1 == 1 && res2 == 0){
+            p1 += 1;
+            p3 += 1;
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Você e o Oponente 3 ganharam a jogada!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
+        }
+        else {
+            roundsFinished += 1;
+            checkGame();
+            if(endGame)
+                SendResult();
+            else{
+                Toast.makeText(MainActivity.this, "Vocês emparatam!",Toast.LENGTH_SHORT).show();
+                cleanAll();
+            }
         }
     }
 
@@ -285,13 +411,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        Log.v(getString(R.string.app_name), "Entrou ckWinner");
         if(p1 == p2 && p1 == p3){ return "Os jogadores empataram!"; }
         else if(p1 > p2 && p1 > p3){ return "Você venceu o jogo!"; }
-        else if(p1 > p2 && p1 == p3){ return "Oponente 2 e Você empataram!"; }
+        else if(p1 > p2 && p1 == p3){ return "Você e o Oponente 2 empataram!"; }
         else if(p1 > p2 && p1 < p3){ return "Oponente 2 venceu o jogo!"; }
-        else if(p1 == p2 && p1 > p3){ return "Oponente 1 e Você empataram!"; }
+        else if(p1 == p2 && p1 > p3){ return "Você e o Oponente 1 empataram!"; }
         else if(p1 < p2 && p2 > p3){ return "Oponente 1 venceu o jogo!"; }
         else if(p1 < p2 && p2 == p3){ return "Oponente 1 e Oponente 2 empataram!"; }
         else if(p1 < p2 && p2 < p3){ return "Oponente 2 venceu o jogo!"; }
-        return "Você perdeu!";
+        return "Vocês empataram!";
     }
 
     private void SendResult(){
@@ -332,7 +458,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void resetGame(){
-        activityMainBinding.imagesSection2.setVisibility(View.GONE);
+        if(gameSettings.getIsTwoPlayers())
+            activityMainBinding.imagesSection2.setVisibility(View.GONE);
+        else
+            activityMainBinding.imagesSection2.setVisibility(View.VISIBLE);
         activityMainBinding.resultSection.setVisibility(View.GONE);
         activityMainBinding.lbBtSection.setVisibility(View.GONE);
         activityMainBinding.btSection.setVisibility(View.GONE);
